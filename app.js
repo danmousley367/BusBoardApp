@@ -1,6 +1,5 @@
 const express = require('express')
 const axios = require('axios').default;
-// const readlineSync = require("readline-sync");
 
 const app = express()
 const port = 3000
@@ -13,18 +12,6 @@ class Bus {
         this.destination = destination
         this.timeToArrival = timeToArrival
     }
-
-    listBus = () => {
-        console.log(`- The ${this.route} to ${this.destination} will arrive in ${this.timeToArrival} mins.`)
-    }
-
-    getJson = () => {
-        return {
-            "Route": `${this.route}`,
-            "Destination": `${this.destination}`,
-            "TimeToArrival": `${this.timeToArrival}`
-        }
-    }
 }
 
 const sortBusesByTime = (busData) => {
@@ -32,9 +19,6 @@ const sortBusesByTime = (busData) => {
         return a.timeToStation - b.timeToStation
     })
 }
-
-// NW5 1TL
-// const postCode = readlineSync.question('Please enter your post code: ')
 
 const getPostCodeData = (postCode, res) => {
     axios.get(`https://api.postcodes.io/postcodes/${postCode}`)
@@ -45,8 +29,6 @@ const getPostCodeData = (postCode, res) => {
             console.log(error)
         })
 }
-
-// getPostCodeData(postCode)
 
 const sortStopsByDistance = (stops) => {
     return stops.sort((a, b) => {
@@ -62,15 +44,19 @@ const getBusStopCodes = (latAndLon, res) => {
             const stopPoints = response.data.stopPoints
             const sortedStops = sortStopsByDistance(stopPoints)
             const nearestStops = sortedStops.slice(0, 2)
+            let promises = []
+            const busDeparturesJson = []
 
-            nearestStops.forEach(async (stop) => {
-                getNextFiveBuses(stop.naptanId)
-                    .then((buses) => {
-                        // console.log(`${stop.commonName} is a distance of ${stop.distance.toFixed(2)}m away. The next buses are:`)
-                        // buses.forEach((bus) => bus.listBus())
-                        res.send(buses)
-                    })
-            })
+            for (let i = 0; i < nearestStops.length; i++) {
+                promises.push(
+                    getNextFiveBuses(nearestStops[i].naptanId)
+                        .then((buses) => {
+                            busDeparturesJson.push(buses)
+                        })
+                )
+            }
+
+            Promise.all(promises).then(() => (res.send(busDeparturesJson)))
         })
         .catch((error) => {
             console.log(error)
@@ -101,7 +87,8 @@ app.get('/', (req, res) => {
 })
 
 app.get('/departureBoards', (req, res) => {
-    getPostCodeData("NW5 1TL", res)
+    let postCode = req.query.postcode
+    getPostCodeData(postCode, res)
 })
 
 app.listen(port, () => {
