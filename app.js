@@ -1,12 +1,10 @@
 const express = require('express')
 const axios = require('axios').default;
-const XMLHttpRequest = require("xmlhttprequest").XMLHttpRequest;
 
 const app = express()
 const port = 3000
 const APP_ID = "tfl_key"
 const APP_KEY = "c918382153274eef95ca07f91a280c17"
-let xhttp = new XMLHttpRequest()
 
 class Bus {
     constructor(route, destination, timeToArrival) {
@@ -101,27 +99,3 @@ app.listen(port, () => {
     console.log(`Example app listening on port ${port}`)
 })
 
-xhttp.open('GET', 'http://localhost:3000/departureBoards?postcode=nw51tl', true);
-
-xhttp.setRequestHeader('Content-Type', 'application/json');
-
-xhttp.onload = function() {
-    // Handle response here using e.g. xhttp.status, xhttp.response, xhttp.responseText
-    const data = JSON.parse(xhttp.responseText)
-    console.log(data)
-    document.getElementById("results").innerHTML = `
-    <h2>Results</h2>
-    <h3>Example stop 1</h3>
-    <ul>
-        <li>2 minutes: 123 to Example Street</li>
-        <li>3 minutes: 456 to Fantasy Land</li>
-    </ul>
-    <h3>Example stop 2</h3>
-    <ul>
-        <li>1 minute: 123 to Example Street</li>
-        <li>4 minutes: 456 to Fantasy Land</li>
-    </ul>
-    `
-}
-
-xhttp.send();
