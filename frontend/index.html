@@ -8,10 +8,10 @@
 </head>
 <body>
 <h1>BusBoard</h1>
-<form id="postCode" action="javascript:void(0);" onsubmit="handleSubmit(this)">
-    Postcode:<br>
-    <input type="text" name="postcode">
-    <input type="submit" value="Submit">
+<form id="form" action="javascript:void(0);" onsubmit="handleSubmit()">
+<!--    <span id="label">Postcode:</span><br>-->
+    <input id="postCode" placeholder="Please enter your post code" type="text" name="postcode">
+    <input id="submit" type="submit" value="Submit">
 </form>
 <div id="results">
     <h2>Results</h2>

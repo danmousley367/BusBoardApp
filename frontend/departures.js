@@ -1,18 +1,15 @@
 // const XMLHttpRequest = require("xmlhttprequest").XMLHttpRequest;
 let xhttp = new XMLHttpRequest();
 
-const handleSubmit = (result) => {
-    event.preventDefault()
-    console.log("works")
-    console.log(result)
-    xhttp.open('GET', 'http://localhost:3000/departureBoards?postcode=nw51tl', true);
+const handleSubmit = () => {
+    let postCode = document.getElementById("postCode").value
+    xhttp.open('GET', `http://localhost:3000/departureBoards?postcode=${postCode}`, true);
 
     xhttp.setRequestHeader('Content-Type', 'application/json');
 
     xhttp.onload = function () {
         // Handle response here using e.g. xhttp.status, xhttp.response, xhttp.responseText
         const data = JSON.parse(xhttp.responseText)
-        console.log(data[0].Departures)
         const getDepartures = (departures) => {
             let departureList = ""
             for (let i = 0; i < departures.length; i++) {

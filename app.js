@@ -85,6 +85,7 @@ const getNextFiveBuses = (busStopCodes) => {
 
 
 app.use(express.static('frontend'));
+app.use('/history', express.static('frontend/history.html'))
 
 app.get('/', (req, res) => {
     res.send('Hello World 2!')
