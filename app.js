@@ -20,10 +20,11 @@ const sortBusesByTime = (busData) => {
     })
 }
 
-const getPostCodeData = (postCode, res) => {
-    axios.get(`https://api.postcodes.io/postcodes/${postCode}`)
+const getPostCodeData = (postCode) => {
+    return axios.get(`https://api.postcodes.io/postcodes/${postCode}`)
         .then((response) => {
-            getBusStopCodes([response.data.result.latitude, response.data.result.longitude], res)
+            const buses = getBusStopCodes([response.data.result.latitude, response.data.result.longitude])
+            return buses
         })
         .catch((error) => {
             console.log(error)
@@ -36,28 +37,23 @@ const sortStopsByDistance = (stops) => {
     })
 }
 
-const getBusStopCodes = (latAndLon, res) => {
+const getBusStopCodes = (latAndLon) => {
     const [lat, lon] = latAndLon
 
-    axios.get(`https://api.tfl.gov.uk/Stoppoint?lat=${lat}&lon=${lon}&stoptypes=NaptanBusCoachStation,NaptanPublicBusCoachTram&radius=500`)
+    return axios.get(`https://api.tfl.gov.uk/Stoppoint?lat=${lat}&lon=${lon}&stoptypes=NaptanBusCoachStation,NaptanPublicBusCoachTram&radius=500`)
         .then((response) => {
             const stopPoints = response.data.stopPoints
             const sortedStops = sortStopsByDistance(stopPoints)
             const nearestStops = sortedStops.slice(0, 2)
-            let promises = []
-            const busDeparturesJson = []
 
-            for (let i = 0; i < nearestStops.length; i++) {
-                promises.push(
-                    getNextFiveBuses(nearestStops[i].naptanId)
-                        .then((buses) => {
-                            // busDeparturesJson[`${nearestStops[i].commonName}`] = buses
-                            busDeparturesJson.push({ "Name" : nearestStops[i].commonName, "Distance": nearestStops[i].distance, "Departures": buses })
-                        })
-                )
-            }
+            return Promise.all(nearestStops.map(nearestStop => {
+                return getNextFiveBuses(nearestStop.naptanId)
+                    .then((buses) => {
+                        console.log(buses)
+                        return { "Name": nearestStop.commonName, "Distance": nearestStop.distance, "Departures": buses }
+                    })
+            }))
 
-            Promise.all(promises).then(() => (res.send(busDeparturesJson)))
         })
         .catch((error) => {
             console.log(error)
@@ -69,11 +65,9 @@ const getNextFiveBuses = (busStopCodes) => {
         .then((response) => {
             const sortedData = sortBusesByTime(response.data)
             const nextFiveBuses = sortedData.slice(0, 5)
-            const buses = []
 
-            nextFiveBuses.forEach((busData) => {
-                const bus = new Bus(busData.lineName, busData.destinationName, busData.timeToStation)
-                buses.push(bus)
+            const buses = nextFiveBuses.map((busData) => {
+                return new Bus(busData.lineName, busData.destinationName, busData.timeToStation)
             })
 
             return buses
@@ -83,7 +77,6 @@ const getNextFiveBuses = (busStopCodes) => {
         })
 }
 
-
 app.use(express.static('frontend'));
 app.use('/history', express.static('frontend/history.html'))
 
@@ -91,9 +84,10 @@ app.get('/', (req, res) => {
     res.send('Hello World 2!')
 })
 
-app.get('/departureBoards', (req, res) => {
+app.get('/departureBoards', async (req, res) => {
     let postCode = req.query.postcode
-    getPostCodeData(postCode, res)
+    const busDeparturesJson = await getPostCodeData(postCode)
+    res.send(busDeparturesJson)
 })
 
 app.listen(port, () => {
